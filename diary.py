@@ -7,7 +7,8 @@ import FirebaseAuth
 class Diary:
     def __init__(self,root):
         self.root=root
-        self.login()
+        self.diaryPage()
+        #self.login()
         self.firebase = pyrebase.initialize_app(FirebaseAuth.firebaseConfig)
         
     def login(self):
@@ -172,6 +173,41 @@ class Diary:
         self.icon = Image.open('images/diary.png')
         self.photo = ImageTk.PhotoImage(self.icon)
         self.page.wm_iconphoto(False, self.photo)
+
+        self.font = ["Helvetica", 15, "bold"]
+        self.topframe = Frame(self.page, bg='#28282B', padx=15, pady=5)
+        self.topframe.pack(expand='no', fill='x')
+        self.diarylabel = Label(self.topframe, text='Your Memories', fg='white',bg='#28282B', font=self.font)
+        self.diarylabel.pack(side='left')
+
+        self.play = ImageTk.PhotoImage(file='images/play.png')
+        self.previous = ImageTk.PhotoImage(file='images/previous.png')
+        self.next = ImageTk.PhotoImage(file='images/next.png')
+
+        self.next_button = Button(self.topframe, image=self.next,bg='#28282B',border=0, cursor='hand2')
+        self.next_button.pack(side='right')
+        self.play_button = Button(self.topframe, image=self.play,bg='#28282B',border=0, cursor='hand2')
+        self.play_button.pack(side='right')
+        self.previous_button = Button(self.topframe, image=self.previous,bg='#28282B',border=0, cursor='hand2')
+        self.previous_button.pack(side='right')
+
+        self.musiclabel = Label(self.topframe, text = 'Let the Music play     ',fg='white',bg='#28282B', font=self.font)
+        self.musiclabel.pack(side='right')
+
+        self.bottomframe = Frame(self.page, bg='#28282B', padx=15, pady=5)
+        self.bottomframe.pack(expand='no', fill='x', side='bottom')
+
+        self.delete_account = Button(self.bottomframe,text='Delete', bg='red', fg='white', font='Arial 12 bold', cursor='hand2',width=10)
+        self.delete_account.pack(side='right')
+
+        self.add_button = Button(self.bottomframe,text='Add', bg='green', fg='white', font='Arial 12 bold', cursor='hand2',width=10)
+        self.add_button.pack(side='left')
+
+        self.clear_button = Button(self.bottomframe,text='Clear', bg='skyblue', fg='black', font='Arial 12 bold', cursor='hand2',width=10)
+        self.clear_button.pack(side='left')
+
+        self.reset_button = Button(self.bottomframe,text='Reset', bg='skyblue', fg='black', font='Arial 12 bold', cursor='hand2',width=10)
+        self.reset_button.pack(side='left')
         
 
 root = Tk()
