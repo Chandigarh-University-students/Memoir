@@ -7,8 +7,7 @@ import FirebaseAuth
 class Diary:
     def __init__(self,root):
         self.root=root
-        self.diaryPage()
-        #self.login()
+        self.login()
         self.firebase = pyrebase.initialize_app(FirebaseAuth.firebaseConfig)
         
     def login(self):
