@@ -1,5 +1,5 @@
 from tkinter import *
-# import pyrebase
+import pyrebase
 from tkinter import ttk, messagebox
 from PIL import ImageTk, Image
 
