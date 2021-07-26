@@ -31,3 +31,5 @@
 
 ![error1](https://github.com/tanishka1411/YourDiary/blob/main/Screenshots/error1.png)
 </details>
+<h3> CONTRIBUTIONS </h3>
+This project is open for contributions.
