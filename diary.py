@@ -2,12 +2,14 @@ from tkinter import *
 import pyrebase
 from tkinter import ttk, messagebox
 from PIL import ImageTk, Image
+from ToolTip import CreateToolTip
 import FirebaseAuth
 
 class Diary:
     def __init__(self,root):
         self.root=root
-        self.login()
+        self.diaryPage()
+        #self.login()
         self.firebase = pyrebase.initialize_app(FirebaseAuth.firebaseConfig)
         
     def login(self):
@@ -168,44 +170,69 @@ class Diary:
         self.page.title('Your Page')
         self.screen_width = self.root.winfo_screenwidth()
         self.screen_height = self.root.winfo_screenheight()
-        self.page.geometry(f'{self.screen_width}x{self.screen_height}')
+        self.page.geometry('1000x600')
         self.icon = Image.open('images/diary.png')
         self.photo = ImageTk.PhotoImage(self.icon)
         self.page.wm_iconphoto(False, self.photo)
-
         self.font = ["Helvetica", 15, "bold"]
-        self.topframe = Frame(self.page, bg='#28282B', padx=15, pady=5)
+
+        #top frame
+        self.topframe = Frame(self.page, bg='#ECECEC', padx=15, pady=5)
         self.topframe.pack(expand='no', fill='x')
-        self.diarylabel = Label(self.topframe, text='Your Memories', fg='white',bg='#28282B', font=self.font)
+        self.diarylabel = Label(self.topframe, text='Your Memories', fg='#28282B',bg='#ECECEC', font=self.font)
         self.diarylabel.pack(side='left')
 
         self.play = ImageTk.PhotoImage(file='images/play.png')
         self.previous = ImageTk.PhotoImage(file='images/previous.png')
         self.next = ImageTk.PhotoImage(file='images/next.png')
 
-        self.next_button = Button(self.topframe, image=self.next,bg='#28282B',border=0, cursor='hand2')
+        self.next_button = Button(self.topframe, image=self.next,bg='#ECECEC',border=0, cursor='hand2')
         self.next_button.pack(side='right')
-        self.play_button = Button(self.topframe, image=self.play,bg='#28282B',border=0, cursor='hand2')
+        self.next_button_ttp = CreateToolTip(self.next_button, 'Next')
+        
+        self.play_button = Button(self.topframe, image=self.play,bg='#ECECEC',border=0, cursor='hand2')
         self.play_button.pack(side='right')
-        self.previous_button = Button(self.topframe, image=self.previous,bg='#28282B',border=0, cursor='hand2')
+        self.play_button_ttp = CreateToolTip(self.play_button, 'Play/Pause')
+        
+        self.previous_button = Button(self.topframe, image=self.previous,bg='#ECECEC',border=0, cursor='hand2')
         self.previous_button.pack(side='right')
+        self.previous_button_ttp = CreateToolTip(self.previous_button, 'Previous')
 
-        self.musiclabel = Label(self.topframe, text = 'Let the Music play     ',fg='white',bg='#28282B', font=self.font)
+        self.musiclabel = Label(self.topframe, text = 'Let the Music play     ',fg='#28282B',bg='#ECECEC', font=self.font)
         self.musiclabel.pack(side='right')
+        
+        #middle frame
+        self.pw = PanedWindow(self.page, borderwidth=2, width = 100)
+        self.pw.pack(fill=BOTH, expand=True)
 
-        self.bottomframe = Frame(self.page, bg='#28282B', padx=15, pady=5)
+        self.nowlabel = Label(self.pw, text='Now', fg='#28282B',bg='#90CCF4')
+        self.pw.add(self.nowlabel)
+
+        self.pw2 = PanedWindow(self.page, borderwidth=2, width = 100)
+        self.pw.add(self.pw2)
+
+        self.oldlabel = Label(self.pw2, text='Old', fg='#28282B',bg='#F78888')
+        self.pw2.add(self.oldlabel)
+
+        #bottom frame
+        self.bottomframe = Frame(self.page, bg='#F3D250', padx=15, pady=5)
         self.bottomframe.pack(expand='no', fill='x', side='bottom')
 
         self.delete_account = Button(self.bottomframe,text='Delete', bg='red', fg='white', font='Arial 12 bold', cursor='hand2',width=10)
         self.delete_account.pack(side='right')
+        
+        self.theme_image = ImageTk.PhotoImage(file='images/theme.png')
+        self.theme_button = Button(self.bottomframe, image=self.theme_image, bg='#F3d250', cursor='hand2', border=0)
+        self.theme_button.pack(side='right')
+        self.theme_button_ttp = CreateToolTip(self.theme_button,'Themes')
 
         self.add_button = Button(self.bottomframe,text='Add', bg='green', fg='white', font='Arial 12 bold', cursor='hand2',width=10)
         self.add_button.pack(side='left')
 
-        self.clear_button = Button(self.bottomframe,text='Clear', bg='skyblue', fg='black', font='Arial 12 bold', cursor='hand2',width=10)
+        self.clear_button = Button(self.bottomframe,text='Clear', bg='#ECECEC', fg='black', font='Arial 12 bold', cursor='hand2',width=10)
         self.clear_button.pack(side='left')
 
-        self.reset_button = Button(self.bottomframe,text='Reset', bg='skyblue', fg='black', font='Arial 12 bold', cursor='hand2',width=10)
+        self.reset_button = Button(self.bottomframe,text='Reset', bg='#ECECEC', fg='black', font='Arial 12 bold', cursor='hand2',width=10)
         self.reset_button.pack(side='left')
         
 
