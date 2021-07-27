@@ -4,13 +4,19 @@ from tkinter import ttk, messagebox
 from PIL import ImageTk, Image
 from ToolTip import CreateToolTip
 import FirebaseAuth
+import datetime
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import auth
 
 class Diary:
     def __init__(self,root):
         self.root=root
-        self.diaryPage()
-        #self.login()
-        self.firebase = pyrebase.initialize_app(FirebaseAuth.firebaseConfig)
+        #self.diaryPage()
+        self.login()
+        #self.firebase = pyrebase.initialize_app(FirebaseAuth.firebaseConfig)
+        self.cred = credentials.Certificate("firebase-adminsdk.json")
+        firebase_admin.initialize_app(self.cred)
         
     def login(self):
         self.root.destroy()
@@ -90,11 +96,11 @@ class Diary:
         self.Background.place(x = 0, y = 0, relwidth=1, relheight=1)
 
         self.font = ["Helvetica", 10, "bold"]
-        self.username_label = Label(self.root, text="Email", font=self.font, bg="white")
-        self.username_label.place(x = 390, y = 130, height = 23)
+        self.email_label = Label(self.root, text="Email", font=self.font, bg="white")
+        self.email_label.place(x = 390, y = 130, height = 23)
 
-        self.username_entry = Entry(self.root, font=self.font)
-        self.username_entry.place(x = 465, y = 130, width = 250, height = 23)
+        self.email_entry = Entry(self.root, font=self.font)
+        self.email_entry.place(x = 465, y = 130, width = 250, height = 23)
 
         self.password_label = Label(self.root, text="Password", font=self.font, bg="white")
         self.password_label.place(x = 390, y = 170, height = 23)
@@ -107,11 +113,23 @@ class Diary:
         self.show_pass = Checkbutton(self.root, bg='white', cursor='hand2', border=0, variable=self.pass_chk, command=self.showPass)
         self.show_pass.place(x = 690, y = 170, height = 23)
 
+        self.username_label = Label(self.root, text="Username", font=self.font, bg="white")
+        self.username_label.place(x = 390, y = 210, height = 23)
+
+        self.username_entry = Entry(self.root, font=self.font)
+        self.username_entry.place(x = 465, y = 210, width = 250, height = 23)
+
+        self.yourname_label = Label(self.root, text="Name", font=self.font, bg="white")
+        self.yourname_label.place(x = 390, y = 250, height = 23)
+
+        self.yourname_entry = Entry(self.root, font=self.font)
+        self.yourname_entry.place(x = 465, y = 250, width = 250, height = 23)
+
         self.register_new = Button(self.root, text="Register",bg="#ADD8E6", font=self.font, relief=RAISED, border = 4,cursor="hand2", command=self.Signup)
-        self.register_new.place(x = 510, y = 210, width = 100)
+        self.register_new.place(x = 510, y = 290, width = 100)
         
         self.login_button = Button(self.root, text="Already Have a Account", bg="skyblue", font=self.font, relief=RAISED, border = 4, cursor="hand2", command=self.login)
-        self.login_button.place(x = 475, y = 290, width = 180, height = 30)
+        self.login_button.place(x = 475, y = 330, width = 180, height = 30)
 
     def showPass(self):
         if self.pass_chk.get()==1:
@@ -128,6 +146,7 @@ class Diary:
         try:
             self.email = self.username_entry.get()
             self.password = self.password_entry.get()
+            
             self.auth = self.firebase.auth()
             self.login = self.auth.sign_in_with_email_and_password(self.email, self.password)
             messagebox.showinfo("Success", "Signed In!")
@@ -143,8 +162,8 @@ class Diary:
         try:
             self.email = self.username_entry.get()
             self.password = self.password_entry.get()
-            self.auth = self.firebase.auth()
-            self.login = self.auth.create_user_with_email_and_password(self.email, self.password)
+            #self.auth = self.firebase.auth()
+            self.login = auth.create_user(uid='tanishka',email=self.email, password=self.password)
             messagebox.showinfo("Success", "Signed Up!")
             self.diaryPage()
         except Exception as e:
@@ -258,6 +277,10 @@ class Diary:
 
         self.reset_button = Button(self.bottomframe,text='Reset', bg='#ECECEC', fg='black', font='Arial 12 bold', cursor='hand2',width=10)
         self.reset_button.pack(side='left')
+
+        self.now = datetime.datetime.now()
+        seld.data = {self.now: 'It was a good'}
+
         
 if __name__=='__main__':
     root = Tk()
