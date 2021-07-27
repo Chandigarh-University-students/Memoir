@@ -167,6 +167,7 @@ class Diary:
 
     def diaryPage(self):
         self.page = Toplevel(self.root)
+        self.page.state("zoomed")
         self.page.title('Your Page')
         self.screen_width = self.root.winfo_screenwidth()
         self.screen_height = self.root.winfo_screenheight()
@@ -202,21 +203,44 @@ class Diary:
         self.musiclabel.pack(side='right')
         
         #middle frame
-        self.pw = PanedWindow(self.page, borderwidth=2, width = 100)
+        self.pw = PanedWindow(self.page, borderwidth=2)
         self.pw.pack(fill=BOTH, expand=True)
-
-        self.nowlabel = Label(self.pw, text='Now', fg='#28282B',bg='#90CCF4')
-        self.pw.add(self.nowlabel)
-
-        self.pw2 = PanedWindow(self.page, borderwidth=2, width = 100)
+        
+        self.pw2 = PanedWindow(self.page, borderwidth=2)
         self.pw.add(self.pw2)
+        self.leftframe = Frame(self.pw, bg='#90CCF4', padx=15, pady=5)
+        self.pw.add(self.leftframe)
+        self.pw.paneconfig(self.leftframe,minsize=600)
+        
+        self.oldlabel = Label(self.leftframe, text='Old', fg='#28282B',bg='#90CCF4')
+        self.oldlabel.pack()
 
-        self.oldlabel = Label(self.pw2, text='Old', fg='#28282B',bg='#F78888')
-        self.pw2.add(self.oldlabel)
+        self.content_text1 = Text(self.leftframe, wrap='word',font=self.font, undo=True, autoseparators =True, maxundo=-1,fg='#28282B',bg='#90CCF4', cursor='arrow')
+        self.content_text1.pack(expand = True,fill=BOTH)
+        self.scroll_bar = Scrollbar(self.content_text1, cursor='hand2')
+        self.content_text1.configure(yscrollcommand=self.scroll_bar.set)
+        self.scroll_bar.config(command=self.content_text1.yview)
+        self.scroll_bar.pack(side='right', fill='y')
+        #self.content_text1.insert(INSERT, "Hello.....")
+        #self.content_text1.config(state=DISABLED)
+
+        self.rightframe = Frame(self.pw2 ,bg='#F78888', padx=15, pady=5)
+        self.pw2.add(self.rightframe)
+        self.pw2.paneconfig(self.rightframe,minsize=600)
+
+        self.newlabel = Label(self.rightframe, text='New', fg='#28282B',bg='#F78888')
+        self.newlabel.pack()
+
+        self.content_text2 = Text(self.rightframe, wrap='word',font=self.font, undo=True, autoseparators =True, maxundo=-1, fg='#28282B',bg='#F78888')
+        self.content_text2.pack(expand = True,fill=BOTH)
+        self.scroll_bar2 = Scrollbar(self.content_text2,cursor='hand2')
+        self.content_text2.configure(yscrollcommand=self.scroll_bar2.set)
+        self.scroll_bar2.config(command=self.content_text2.yview)
+        self.scroll_bar2.pack(side='right', fill='y')
 
         #bottom frame
         self.bottomframe = Frame(self.page, bg='#F3D250', padx=15, pady=5)
-        self.bottomframe.pack(expand='no', fill='x', side='bottom')
+        self.bottomframe.pack(expand=0, fill=X, side='top')
 
         self.delete_account = Button(self.bottomframe,text='Delete', bg='red', fg='white', font='Arial 12 bold', cursor='hand2',width=10)
         self.delete_account.pack(side='right')
@@ -235,7 +259,7 @@ class Diary:
         self.reset_button = Button(self.bottomframe,text='Reset', bg='#ECECEC', fg='black', font='Arial 12 bold', cursor='hand2',width=10)
         self.reset_button.pack(side='left')
         
-
-root = Tk()
-obj = Diary(root)
-root.mainloop()
+if __name__=='__main__':
+    root = Tk()
+    obj = Diary(root)
+    root.mainloop()
