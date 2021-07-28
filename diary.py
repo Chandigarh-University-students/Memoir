@@ -7,16 +7,17 @@ import FirebaseAuth
 import datetime
 import firebase_admin
 from firebase_admin import credentials
-from firebase_admin import auth
+from firebase_admin import auth, db
 
 class Diary:
     def __init__(self,root):
         self.root=root
         #self.diaryPage()
         self.login()
-        #self.firebase = pyrebase.initialize_app(FirebaseAuth.firebaseConfig)
+        self.firebase = pyrebase.initialize_app(FirebaseAuth.firebaseConfig)
         self.cred = credentials.Certificate("firebase-adminsdk.json")
-        firebase_admin.initialize_app(self.cred)
+        firebase_admin.initialize_app(self.cred, {
+            'databaseURL':'https://your-diary-d0638-default-rtdb.firebaseio.com/'})
         
     def login(self):
         self.root.destroy()
@@ -160,10 +161,12 @@ class Diary:
             return
 
         try:
-            self.email = self.username_entry.get()
+            self.email = self.email_entry.get()
             self.password = self.password_entry.get()
+            self.username = self.username_entry.get()
+            self.yourname = self.yourname_entry.get()
             #self.auth = self.firebase.auth()
-            self.login = auth.create_user(uid='tanishka',email=self.email, password=self.password)
+            self.login = auth.create_user(uid=self.username,email=self.email, password=self.password, display_name=self.yourname)
             messagebox.showinfo("Success", "Signed Up!")
             self.diaryPage()
         except Exception as e:
@@ -177,7 +180,7 @@ class Diary:
             self.email = self.username_entry.get()
             if messagebox.askyesno('Confirm',f'Is your mail {self.email} correct?', parent=self.root):
                 self.auth = self.firebase.auth()
-                self.auth.send_password_reset_email(self.email)
+                auth.generate_password_reset_link(self.email, action_code_settings=None, app=None)
                 messagebox.showinfo('Info',f'A password reset email is sent to {self.email}', parent=self.root)
             else:
                 messagebox.showinfo('Info','Provide us with your email',parent=self.root)
@@ -195,11 +198,12 @@ class Diary:
         self.photo = ImageTk.PhotoImage(self.icon)
         self.page.wm_iconphoto(False, self.photo)
         self.font = ["Helvetica", 15, "bold"]
+        self.userinfo = auth.get_user_by_email(email = self.email, app=None)
 
         #top frame
         self.topframe = Frame(self.page, bg='#ECECEC', padx=15, pady=5)
         self.topframe.pack(expand='no', fill='x')
-        self.diarylabel = Label(self.topframe, text='Your Memories', fg='#28282B',bg='#ECECEC', font=self.font)
+        self.diarylabel = Label(self.topframe, text=self.userinfo.display_name, fg='#28282B',bg='#ECECEC', font=self.font)
         self.diarylabel.pack(side='left')
 
         self.play = ImageTk.PhotoImage(file='images/play.png')
@@ -231,7 +235,7 @@ class Diary:
         self.pw.add(self.leftframe)
         self.pw.paneconfig(self.leftframe,minsize=600)
         
-        self.oldlabel = Label(self.leftframe, text='Old', fg='#28282B',bg='#90CCF4')
+        self.oldlabel = Label(self.leftframe, text='Your Memories', fg='#28282B', font='Arial 12 bold', bg='#90CCF4')
         self.oldlabel.pack()
 
         self.content_text1 = Text(self.leftframe, wrap='word',font=self.font, undo=True, autoseparators =True, maxundo=-1,fg='#28282B',bg='#90CCF4', cursor='arrow')
@@ -241,13 +245,18 @@ class Diary:
         self.scroll_bar.config(command=self.content_text1.yview)
         self.scroll_bar.pack(side='right', fill='y')
         #self.content_text1.insert(INSERT, "Hello.....")
-        #self.content_text1.config(state=DISABLED)
+        self.ref = db.reference('/')
+        self.users_ref = self.ref.child('users').child(self.userinfo.uid)
+        self.data = self.users_ref.get()
+        for key, val in self.data.items():
+            self.content_text1.insert(1.0,'{0} {1}'.format(key, val))
+        self.content_text1.config(state=DISABLED)
 
         self.rightframe = Frame(self.pw2 ,bg='#F78888', padx=15, pady=5)
         self.pw2.add(self.rightframe)
         self.pw2.paneconfig(self.rightframe,minsize=600)
 
-        self.newlabel = Label(self.rightframe, text='New', fg='#28282B',bg='#F78888')
+        self.newlabel = Label(self.rightframe, text='New', fg='#28282B', font='Arial 12 bold', bg='#F78888')
         self.newlabel.pack()
 
         self.content_text2 = Text(self.rightframe, wrap='word',font=self.font, undo=True, autoseparators =True, maxundo=-1, fg='#28282B',bg='#F78888')
@@ -269,17 +278,40 @@ class Diary:
         self.theme_button.pack(side='right')
         self.theme_button_ttp = CreateToolTip(self.theme_button,'Themes')
 
-        self.add_button = Button(self.bottomframe,text='Add', bg='green', fg='white', font='Arial 12 bold', cursor='hand2',width=10)
+        self.add_button = Button(self.bottomframe,text='Add', bg='green', fg='white', font='Arial 12 bold', cursor='hand2',width=10, command=self.addData)
         self.add_button.pack(side='left')
 
-        self.clear_button = Button(self.bottomframe,text='Clear', bg='#ECECEC', fg='black', font='Arial 12 bold', cursor='hand2',width=10)
+        self.clear_button = Button(self.bottomframe,text='Clear', bg='#ECECEC', fg='black', font='Arial 12 bold', cursor='hand2',width=10, command=self.clearData)
         self.clear_button.pack(side='left')
 
-        self.reset_button = Button(self.bottomframe,text='Reset', bg='#ECECEC', fg='black', font='Arial 12 bold', cursor='hand2',width=10)
+        self.reset_button = Button(self.bottomframe,text='Reset', bg='#ECECEC', fg='black', font='Arial 12 bold', cursor='hand2',width=10, command=self.resetData)
         self.reset_button.pack(side='left')
-
+        self.now = datetime.datetime.now()        
+        self.newlabel.config(text=self.now.strftime("%Y-%m-%d %H:%M:%S"), anchor="e", justify=LEFT)
+        
+    def addData(self):
         self.now = datetime.datetime.now()
-        seld.data = {self.now: 'It was a good'}
+        self.content = self.content_text2.get(1.0, 'end')
+
+        self.ref = db.reference('/')
+        self.users_ref = self.ref.child('users').child(self.userinfo.uid)
+        self.users_ref.update({self.now.strftime("%Y-%m-%d %H:%M:%S"): self.content})
+        self.now = datetime.datetime.now()
+        self.newlabel.config(text=self.now.strftime("%Y-%m-%d %H:%M:%S"), anchor="e", justify=LEFT)
+
+        self.content_text1.config(state=ABLED)
+        self.data = self.users_ref.get()
+        for key, val in self.data.items():
+            self.content_text1.insert(1.0,'{0} {1}'.format(key, val))
+        self.content_text1.config(state=DISABLED)
+        print('success')
+
+    def resetData(self):
+        self.now = datetime.datetime.now()
+        self.newlabel.config(text=self.now.strftime("%Y-%m-%d %H:%M:%S"), anchor="e", justify=LEFT)
+
+    def clearData(self):
+        self.content_text2.delete(1.0,END)
 
         
 if __name__=='__main__':
