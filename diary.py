@@ -70,6 +70,7 @@ class Diary:
 
         self.register_new = Button(self.root, text="Register New Account",bg="#ADD8E6", font=self.font, relief=RAISED, border = 4, command=self.register, cursor="hand2")
         self.register_new.place(x = 475, y = 330, width = 160)
+        self.now = datetime.datetime.now()
 
     def register(self):
         self.root.destroy()
@@ -167,6 +168,10 @@ class Diary:
             self.yourname = self.yourname_entry.get()
             #self.auth = self.firebase.auth()
             self.login = auth.create_user(uid=self.username,email=self.email, password=self.password, display_name=self.yourname)
+            self.userinfo = auth.get_user_by_email(email = self.email, app=None)
+            self.ref = db.reference('/')
+            self.users_ref = self.ref.child('users').child(self.userinfo.uid)
+            self.users_ref.update({self.now.strftime("%Y-%m-%d %H:%M:%S"): 'Account Created'})
             messagebox.showinfo("Success", "Signed Up!")
             self.diaryPage()
         except Exception as e:
@@ -197,8 +202,9 @@ class Diary:
         self.icon = Image.open('images/diary.png')
         self.photo = ImageTk.PhotoImage(self.icon)
         self.page.wm_iconphoto(False, self.photo)
-        self.font = ["Helvetica", 15, "bold"]
+        self.font = ["Times New Roman", 16, "bold"]
         self.userinfo = auth.get_user_by_email(email = self.email, app=None)
+        self.theme_status = True
 
         #top frame
         self.topframe = Frame(self.page, bg='#ECECEC', padx=15, pady=5)
@@ -238,7 +244,7 @@ class Diary:
         self.oldlabel = Label(self.leftframe, text='Your Memories', fg='#28282B', font='Arial 12 bold', bg='#90CCF4')
         self.oldlabel.pack()
 
-        self.content_text1 = Text(self.leftframe, wrap='word',font=self.font, undo=True, autoseparators =True, maxundo=-1,fg='#28282B',bg='#90CCF4', cursor='arrow')
+        self.content_text1 = Text(self.leftframe, wrap='word',font='Arial 12 bold', undo=True, autoseparators =True, maxundo=-1,fg='#28282B',bg='#90CCF4', cursor='arrow')
         self.content_text1.pack(expand = True,fill=BOTH)
         self.scroll_bar = Scrollbar(self.content_text1, cursor='hand2')
         self.content_text1.configure(yscrollcommand=self.scroll_bar.set)
@@ -249,7 +255,7 @@ class Diary:
         self.users_ref = self.ref.child('users').child(self.userinfo.uid)
         self.data = self.users_ref.get()
         for key, val in self.data.items():
-            self.content_text1.insert(1.0,'{0} {1}'.format(key, val))
+            self.content_text1.insert(1.0,'{0}- {1}'.format(key, val))
         self.content_text1.config(state=DISABLED)
 
         self.rightframe = Frame(self.pw2 ,bg='#F78888', padx=15, pady=5)
@@ -259,7 +265,7 @@ class Diary:
         self.newlabel = Label(self.rightframe, text='New', fg='#28282B', font='Arial 12 bold', bg='#F78888')
         self.newlabel.pack()
 
-        self.content_text2 = Text(self.rightframe, wrap='word',font=self.font, undo=True, autoseparators =True, maxundo=-1, fg='#28282B',bg='#F78888')
+        self.content_text2 = Text(self.rightframe, wrap='word',font='Arial 12 bold', undo=True, autoseparators =True, maxundo=-1, fg='#28282B',bg='#F78888')
         self.content_text2.pack(expand = True,fill=BOTH)
         self.scroll_bar2 = Scrollbar(self.content_text2,cursor='hand2')
         self.content_text2.configure(yscrollcommand=self.scroll_bar2.set)
@@ -270,11 +276,11 @@ class Diary:
         self.bottomframe = Frame(self.page, bg='#F3D250', padx=15, pady=5)
         self.bottomframe.pack(expand=0, fill=X, side='top')
 
-        self.delete_account = Button(self.bottomframe,text='Delete', bg='red', fg='white', font='Arial 12 bold', cursor='hand2',width=10)
+        self.delete_account = Button(self.bottomframe,text='Delete', bg='red', fg='white', font='Arial 12 bold', cursor='hand2',width=10, command=self.deleteUser)
         self.delete_account.pack(side='right')
         
         self.theme_image = ImageTk.PhotoImage(file='images/theme.png')
-        self.theme_button = Button(self.bottomframe, image=self.theme_image, bg='#F3d250', cursor='hand2', border=0)
+        self.theme_button = Button(self.bottomframe, image=self.theme_image, bg='#F3d250', cursor='hand2', border=0, command=self.changeTheme)
         self.theme_button.pack(side='right')
         self.theme_button_ttp = CreateToolTip(self.theme_button,'Themes')
 
@@ -299,10 +305,11 @@ class Diary:
         self.now = datetime.datetime.now()
         self.newlabel.config(text=self.now.strftime("%Y-%m-%d %H:%M:%S"), anchor="e", justify=LEFT)
 
-        self.content_text1.config(state=ABLED)
+        self.content_text1.config(state=NORMAL)
+        self.content_text1.delete(1.0,END)
         self.data = self.users_ref.get()
         for key, val in self.data.items():
-            self.content_text1.insert(1.0,'{0} {1}'.format(key, val))
+            self.content_text1.insert(1.0,'{0}- {1}'.format(key, val))
         self.content_text1.config(state=DISABLED)
         print('success')
 
@@ -313,6 +320,54 @@ class Diary:
     def clearData(self):
         self.content_text2.delete(1.0,END)
 
+    def changeTheme(self):
+        if self.theme_status== True:
+            self.theme_status = False
+            self.topframe.config(bg='#474853')
+            self.diarylabel.config(fg='#ECECEC', bg='#474853')
+            self.musiclabel.config(fg='#ECECEC', bg='#474853')
+            self.next_button.config(bg='#474853')
+            self.play_button.config(bg='#474853')
+            self.previous_button.config(bg='#474853')
+
+            self.leftframe.config(bg='#AAA0A0')
+            self.oldlabel.config(bg='#AAA0A0', fg='#28282B')
+            self.content_text1.config(bg='#AAA0A0', fg='#28282B')
+
+            self.rightframe.config(bg='#8E8268')
+            self.newlabel.config(bg='#8E8268', fg='#28282B')
+            self.content_text2.config(bg='#8E8268', fg='#28282B')
+
+            self.bottomframe.config(bg='#86B3D1')
+            self.theme_button.config(bg='#86B3D1')
+
+        else:
+            self.theme_status = True
+            self.topframe.config(bg='#ECECEC')
+            self.diarylabel.config(fg='#28282B', bg='#ECECEC')
+            self.musiclabel.config(fg='#28282B', bg='#ECECEC')
+            self.next_button.config(bg='#ECECEC')
+            self.play_button.config(bg='#ECECEC')
+            self.previous_button.config(bg='#ECECEC')
+
+            self.leftframe.config(bg='#90CCF4')
+            self.oldlabel.config(bg='#90CCF4', fg='#28282B')
+            self.content_text1.config(bg='#90CCF4', fg='#28282B')
+
+            self.rightframe.config(bg='#F78888')
+            self.newlabel.config(bg='#F78888', fg='#28282B')
+            self.content_text2.config(bg='#F78888', fg='#28282B')
+
+            self.bottomframe.config(bg='#F3d250')
+            self.theme_button.config(bg='#F3d250')
+
+    def deleteUser(self):
+        auth.delete_user(self.userinfo.uid, app=None)
+        self.db = self.firebase.database()
+        self.db.child('users').child(self.userinfo.uid).remove()
+        self.page.destroy()
+        messagebox.showinfo("Success", "Account Deleted")
+        
         
 if __name__=='__main__':
     root = Tk()
