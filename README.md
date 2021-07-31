@@ -28,15 +28,16 @@
 <summary>Click for Screenshots</summary>
 <h4> Login </h4>
 
-![login](https://user-images.githubusercontent.com/67412892/127750103-066529d2-613e-4744-8af3-2a28891fcc29.png)
+![login](https://user-images.githubusercontent.com/67412892/127750381-69e18050-ce0a-4745-b03c-7ae6b929f72a.png)
 
 <h4> Register </h4>
   
-![register2](https://user-images.githubusercontent.com/67412892/127750074-d6645ba2-a83e-4bcd-b781-4e61f4162e97.png)
+![register](https://user-images.githubusercontent.com/67412892/127750390-30858818-7a5f-4b02-9c26-c66838e36d91.png)
+
 
 <h4> When all fields are not filled </h4>
 
-![error1](https://user-images.githubusercontent.com/67412892/127750126-e5a47c69-fba5-4d80-b03f-414b1f2810f0.png)
+![error](https://user-images.githubusercontent.com/67412892/127750397-aad9c6a1-503d-4962-be0d-dc39d8bf9650.png)
 
 <h4> Main Screen</h4> 
 
