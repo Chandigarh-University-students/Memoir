@@ -1,6 +1,6 @@
 from tkinter import *
 import pyrebase
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, filedialog
 from PIL import ImageTk, Image
 from ToolTip import CreateToolTip
 import FirebaseAuth
@@ -8,16 +8,23 @@ import datetime
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import auth, db
+import pygame
+from pygame import mixer
+import os
 
 class Diary:
     def __init__(self,root):
         self.root=root
+        self.root.protocol('WM_DELETE_WINDOW', self.exit_editor)
+        self.songstatus = False
+        self.song_check_status = False
         #self.diaryPage()
         self.login()
         self.firebase = pyrebase.initialize_app(FirebaseAuth.firebaseConfig)
         self.cred = credentials.Certificate("firebase-adminsdk.json")
         firebase_admin.initialize_app(self.cred, {
             'databaseURL':'https://your-diary-d0638-default-rtdb.firebaseio.com/'})
+        
         
     def login(self):
         self.root.destroy()
@@ -151,10 +158,11 @@ class Diary:
             
             self.auth = self.firebase.auth()
             self.login = self.auth.sign_in_with_email_and_password(self.email, self.password)
-            messagebox.showinfo("Success", "Signed In!")
-            self.diaryPage()
+            messagebox.showinfo("Welcome", "Signed In!     ")
+            
         except Exception as e:
             messagebox.showerror("Error !", str(e), parent=self.root)
+        self.diaryPage()
 
     def Signup(self):
         if self.password_entry.get()=='' or self.username_entry.get()=='':
@@ -172,10 +180,11 @@ class Diary:
             self.ref = db.reference('/')
             self.users_ref = self.ref.child('users').child(self.userinfo.uid)
             self.users_ref.update({self.now.strftime("%Y-%m-%d %H:%M:%S"): 'Account Created'})
-            messagebox.showinfo("Success", "Signed Up!")
-            self.diaryPage()
+            messagebox.showinfo("Welcome", "Signed Up!    ")
+            
         except Exception as e:
             messagebox.showerror("Error !", str(e), parent=self.root)
+        self.diaryPage()
 
     def forgetPass(self):
         if self.username_entry.get()=='':
@@ -193,11 +202,13 @@ class Diary:
             messagebox.showerror('Error !',str(e),parent=self.root)
 
     def diaryPage(self):
-        self.page = Toplevel(self.root)
+        self.root.destroy()
+        self.page = Tk()
+        #self.page = Toplevel(self.root)
         self.page.state("zoomed")
         self.page.title('Your Page')
-        self.screen_width = self.root.winfo_screenwidth()
-        self.screen_height = self.root.winfo_screenheight()
+        self.screen_width = self.page.winfo_screenwidth()
+        self.screen_height = self.page.winfo_screenheight()
         self.page.geometry('1000x600')
         self.icon = Image.open('images/diary.png')
         self.photo = ImageTk.PhotoImage(self.icon)
@@ -209,24 +220,29 @@ class Diary:
         #top frame
         self.topframe = Frame(self.page, bg='#ECECEC', padx=15, pady=5)
         self.topframe.pack(expand='no', fill='x')
-        self.diarylabel = Label(self.topframe, text=self.userinfo.display_name, fg='#28282B',bg='#ECECEC', font=self.font)
+        self.diarylabel = Label(self.topframe, text='Welcome \U0001f496 '+self.userinfo.display_name, fg='#28282B',bg='#ECECEC', font=self.font)
         self.diarylabel.pack(side='left')
 
         self.play = ImageTk.PhotoImage(file='images/play.png')
         self.previous = ImageTk.PhotoImage(file='images/previous.png')
         self.next = ImageTk.PhotoImage(file='images/next.png')
+        self.stop = ImageTk.PhotoImage(file='images/stop.png')
 
-        self.next_button = Button(self.topframe, image=self.next,bg='#ECECEC',border=0, cursor='hand2')
+        self.next_button = Button(self.topframe, image=self.next,bg='#ECECEC',border=0, cursor='hand2', command =self.nextSong)
         self.next_button.pack(side='right')
         self.next_button_ttp = CreateToolTip(self.next_button, 'Next')
         
-        self.play_button = Button(self.topframe, image=self.play,bg='#ECECEC',border=0, cursor='hand2')
+        self.play_button = Button(self.topframe, image=self.play,bg='#ECECEC',border=0, cursor='hand2', command =self.playSong)
         self.play_button.pack(side='right')
-        self.play_button_ttp = CreateToolTip(self.play_button, 'Play/Pause')
+        self.play_button_ttp = CreateToolTip(self.play_button, 'Play')
         
-        self.previous_button = Button(self.topframe, image=self.previous,bg='#ECECEC',border=0, cursor='hand2')
+        self.previous_button = Button(self.topframe, image=self.previous,bg='#ECECEC',border=0, cursor='hand2', command =self.previousSong)
         self.previous_button.pack(side='right')
         self.previous_button_ttp = CreateToolTip(self.previous_button, 'Previous')
+
+        self.stop_button = Button(self.topframe, image=self.stop,bg='#ECECEC',border=0, cursor='hand2',command=self.stopSong)
+        self.stop_button.pack(side='right')
+        self.stop_button_ttp = CreateToolTip(self.stop_button, 'Stop')
 
         self.musiclabel = Label(self.topframe, text = 'Let the Music play     ',fg='#28282B',bg='#ECECEC', font=self.font)
         self.musiclabel.pack(side='right')
@@ -294,6 +310,8 @@ class Diary:
         self.reset_button.pack(side='left')
         self.now = datetime.datetime.now()        
         self.newlabel.config(text=self.now.strftime("%Y-%m-%d %H:%M:%S"), anchor="e", justify=LEFT)
+        messagebox.showinfo("Select Folder", "Select a folder for playing Songs")
+        self.song()
         
     def addData(self):
         self.now = datetime.datetime.now()
@@ -311,7 +329,6 @@ class Diary:
         for key, val in self.data.items():
             self.content_text1.insert(1.0,'{0}- {1}'.format(key, val))
         self.content_text1.config(state=DISABLED)
-        print('success')
 
     def resetData(self):
         self.now = datetime.datetime.now()
@@ -323,23 +340,24 @@ class Diary:
     def changeTheme(self):
         if self.theme_status== True:
             self.theme_status = False
-            self.topframe.config(bg='#474853')
-            self.diarylabel.config(fg='#ECECEC', bg='#474853')
-            self.musiclabel.config(fg='#ECECEC', bg='#474853')
-            self.next_button.config(bg='#474853')
-            self.play_button.config(bg='#474853')
-            self.previous_button.config(bg='#474853')
+            self.topframe.config(bg='#636B46')
+            self.diarylabel.config(fg='#ECECEC', bg='#636B46')
+            self.musiclabel.config(fg='#ECECEC', bg='#636B46')
+            self.next_button.config(bg='#636B46')
+            self.play_button.config(bg='#636B46')
+            self.previous_button.config(bg='#636B46')
+            self.stop_button.config(bg='#636B46')
 
-            self.leftframe.config(bg='#AAA0A0')
-            self.oldlabel.config(bg='#AAA0A0', fg='#28282B')
-            self.content_text1.config(bg='#AAA0A0', fg='#28282B')
+            self.leftframe.config(bg='#CDA34F')
+            self.oldlabel.config(bg='#CDA34F', fg='#28282B')
+            self.content_text1.config(bg='#CDA34F', fg='#28282B')
 
-            self.rightframe.config(bg='#8E8268')
-            self.newlabel.config(bg='#8E8268', fg='#28282B')
-            self.content_text2.config(bg='#8E8268', fg='#28282B')
+            self.rightframe.config(bg='#E9E7DA')
+            self.newlabel.config(bg='#E9E7DA', fg='#28282B')
+            self.content_text2.config(bg='#E9E7DA', fg='#28282B')
 
-            self.bottomframe.config(bg='#86B3D1')
-            self.theme_button.config(bg='#86B3D1')
+            self.bottomframe.config(bg='#373F27')
+            self.theme_button.config(bg='#373F27')
 
         else:
             self.theme_status = True
@@ -349,6 +367,7 @@ class Diary:
             self.next_button.config(bg='#ECECEC')
             self.play_button.config(bg='#ECECEC')
             self.previous_button.config(bg='#ECECEC')
+            self.stop_button.config(bg='#ECECEC')
 
             self.leftframe.config(bg='#90CCF4')
             self.oldlabel.config(bg='#90CCF4', fg='#28282B')
@@ -362,13 +381,62 @@ class Diary:
             self.theme_button.config(bg='#F3d250')
 
     def deleteUser(self):
-        auth.delete_user(self.userinfo.uid, app=None)
-        self.db = self.firebase.database()
-        self.db.child('users').child(self.userinfo.uid).remove()
-        self.page.destroy()
-        messagebox.showinfo("Success", "Account Deleted")
-        
-        
+        if messagebox.askyesno("Delete Account", "Are you sure you want to Delete Account?"):
+            auth.delete_user(self.userinfo.uid, app=None)
+            self.db = self.firebase.database()
+            self.db.child('users').child(self.userinfo.uid).remove()
+            self.page.destroy()
+            messagebox.showinfo("Success", "Account Deleted")
+
+    def exit_editor(self):
+         if messagebox.askyesno("Exit", "Are you sure you want to Quit?"):
+            #songObj = MusicPlayer()
+            self.stopSong()
+            self.root.destroy()
+
+    def song(self):
+        mixer.init()
+        self.folder_selected = filedialog.askdirectory()
+        os.chdir(self.folder_selected)
+        self.songs=os.listdir()
+        self.song_number = 0
+        self.playlist = []
+        for s in self.songs:
+            self.playlist.append(s)
+
+    def playSong(self):
+        currentsong=self.playlist[self.song_number]
+        #print(currentsong)
+        mixer.music.load(currentsong)
+        mixer.music.play()
+    def pauseSong(self):
+        mixer.music.pause()
+    def stopSong(self):
+        mixer.music.stop()
+    def resumesong(self):
+        mixer.music.unpause()
+    def nextSong(self):
+        try:
+            if self.song_number == len(self.playlist):
+                self.song_number = 0
+                self.playSong()
+                return
+            self.song_number = self.song_number+1
+            self.playSong()
+        except Exception as e:
+            self.song_number = 0
+            self.playSong()
+            return
+    def previousSong(self):
+        try:            
+            self.song_number = self.song_number-1
+            self.playSong()
+        except Exception as e:
+            self.song_number = len(self.playlist)-1
+            self.playSong()
+            return
+
+
 if __name__=='__main__':
     root = Tk()
     obj = Diary(root)
